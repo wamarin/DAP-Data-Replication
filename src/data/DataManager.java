@@ -3,22 +3,27 @@ package data;
 import data.network.NetworkManager;
 import data.network.Packet;
 import data.network.PacketFactory;
+import data.network.PacketType;
 import data.nodes.ANode;
 import data.nodes.AbstractNode;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.*;
 
-public class DataManager {
+public class DataManager implements Runnable{
     private final HashMap<String, Integer> nodes;
     private final List<Thread> threads;
     private final int n_values;
+    private final int port = 6979;
+    private boolean running = true;
+    private final HashSet<UUID> acknowledgements;
 
     public DataManager(int n_values) {
-        nodes = new HashMap<>();
-        threads = new ArrayList<>();
+        this.nodes = new HashMap<>();
+        this.threads = new ArrayList<>();
+        this.acknowledgements = new HashSet<>();
         this.n_values = n_values;
 
         nodes.put("T1", 6979);
@@ -32,6 +37,27 @@ public class DataManager {
 
         nodes.put("C1", 6985);
         nodes.put("C2", 6986);
+    }
+
+    @Override
+    public void run() {
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            Packet packet;
+            Socket client;
+
+            while (running) {
+                client = serverSocket.accept();
+
+                packet = NetworkManager.readPacket(client);
+
+                System.out.println(packet.getType() + " : " + packet.getTarget() + " : " + packet.getValue());
+                if (packet.getType() == PacketType.ACKNOWLEDGE) {
+                    acknowledgements.add(packet.getId());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void startCoreLayer() {
@@ -51,11 +77,23 @@ public class DataManager {
     public void sendWrite(int target, int value) {
         Packet packet = PacketFactory.newWritePacket("T1", target, value);
         NetworkManager.sendPacket(packet, nodes.get("A1"));
-        NetworkManager.sendPacket(packet, nodes.get("A2"));
-        NetworkManager.sendPacket(packet, nodes.get("A3"));
+
+        while(!acknowledgements.contains(packet.getId())) {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void sendRead(int target) {
+        Packet packet = PacketFactory.newReadPacket("T1", target);
+        NetworkManager.sendPacket(packet, nodes.get("A1"));
     }
 
     public void shutdown() {
+        this.running = false;
         Packet packet = PacketFactory.newShutdownPacket("T1");
 
         for (int port: nodes.values()) {

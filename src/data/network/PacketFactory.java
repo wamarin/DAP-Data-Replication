@@ -1,5 +1,7 @@
 package data.network;
 
+import java.util.UUID;
+
 public class PacketFactory {
 
     public static Packet newWritePacket(String id, int target, int value) {
@@ -15,8 +17,17 @@ public class PacketFactory {
         return packet;
     }
 
-    public static Packet newWriteReplicatedPacket(String id, int target, int value) {
+    public static Packet newResponsePacket(String id, int target, int value, UUID requestId) {
+        Packet packet = new Packet(PacketType.RESPONSE, id);
+        packet.setId(requestId);
+        packet.setTarget(target);
+        packet.setValue(value);
+        return packet;
+    }
+
+    public static Packet newWriteReplicatedPacket(String id, int target, int value, UUID requestId) {
         Packet packet = new Packet(PacketType.WRITE_REPLICATED, id);
+        packet.setId(requestId);
         packet.setTarget(target);
         packet.setValue(value);
         return packet;
@@ -28,8 +39,10 @@ public class PacketFactory {
         return packet;
     }
 
-    public static Packet newAcknowledgePacket(String id, int target) {
-        return new Packet(PacketType.ACKNOWLEDGE, id);
+    public static Packet newAcknowledgePacket(String id, UUID requestId) {
+        Packet packet = new Packet(PacketType.ACKNOWLEDGE, id);
+        packet.setId(requestId);
+        return packet;
     }
 
     public static Packet newShutdownPacket(String id) {

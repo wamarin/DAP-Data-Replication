@@ -1,8 +1,10 @@
 package data.network;
 
 import java.io.Serializable;
+import java.util.UUID;
 
 public class Packet implements Serializable {
+    private UUID id;
     private final PacketType type;
     private int target;
     private final String clientId;
@@ -10,6 +12,7 @@ public class Packet implements Serializable {
     private int[] values = null;
 
     public Packet(PacketType type, String clientId) {
+        this.id = UUID.randomUUID();
         this.type = type;
         this.clientId = clientId;
     }
@@ -45,4 +48,14 @@ public class Packet implements Serializable {
     public void setValues(int[] values) {
         this.values = values;
     }
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+
 }
