@@ -6,6 +6,8 @@ import data.network.PacketFactory;
 import data.network.PacketType;
 import data.nodes.ANode;
 import data.nodes.AbstractNode;
+import data.nodes.BNode;
+import data.nodes.CNode;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -60,18 +62,62 @@ public class DataManager implements Runnable{
         }
     }
 
-    public void startCoreLayer() {
+    public void startLayers() {
+        startLayer2();
+        startLayer1();
+        startLayer0();
+    }
+
+    private void startLayer0() {
         HashSet<String> peers = new HashSet<>();
+        Thread thread;
+        List<String> backups;
 
         peers.add("A1");
         peers.add("A2");
         peers.add("A3");
 
-        for (String nodeId: peers) {
-            Thread thread = new Thread(new ANode(nodes.get(nodeId), nodeId, nodes, n_values, peers));
-            threads.add(thread);
-            thread.start();
-        }
+        thread = new Thread(new ANode(nodes.get("A1"), "A1", nodes, n_values, peers, null));
+        threads.add(thread);
+        thread.start();
+
+        backups = new ArrayList<>();
+        backups.add("B1");
+
+        thread = new Thread(new ANode(nodes.get("A2"), "A2", nodes, n_values, peers, backups));
+        threads.add(thread);
+        thread.start();
+
+        backups = new ArrayList<>();
+        backups.add("B2");
+
+        thread = new Thread(new ANode(nodes.get("A3"), "A3", nodes, n_values, peers, backups));
+        threads.add(thread);
+        thread.start();
+    }
+
+    private void startLayer1() {
+        List<String> backups = new ArrayList<>();
+        backups.add("C1");
+        backups.add("C2");
+
+        Thread thread = new Thread(new BNode(nodes.get("B1"), "B1", nodes, n_values, null));
+        threads.add(thread);
+        thread.start();
+
+        thread = new Thread(new BNode(nodes.get("B2"), "B2", nodes, n_values, backups));
+        threads.add(thread);
+        thread.start();
+    }
+
+    private void startLayer2() {
+        Thread thread = new Thread(new CNode(nodes.get("C1"), "C1", nodes, n_values, null));
+        threads.add(thread);
+        thread.start();
+
+        thread = new Thread(new CNode(nodes.get("C2"), "C2", nodes, n_values, null));
+        threads.add(thread);
+        thread.start();
     }
 
     public void sendWrite(int target, int value) {

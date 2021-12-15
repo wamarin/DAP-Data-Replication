@@ -11,9 +11,10 @@ public class ANode extends AbstractNode{
     private final LinkedList<Packet> queue;
     private HashSet<String> acknowledgements;
     private final Thread processorThread;
+    private int updateCounter = 0;
 
-    public ANode(int port, String id, HashMap<String, Integer> nodes, int n_values, HashSet<String> peers) {
-        super(port, id, nodes, n_values);
+    public ANode(int port, String id, HashMap<String, Integer> nodes, int n_values, HashSet<String> peers, List<String> backups) {
+        super(port, id, nodes, n_values, backups);
         this.peers = peers;
         this.processorThread = new Thread(new PacketProcessor());
         this.queue = new LinkedList<>();
@@ -84,6 +85,10 @@ public class ANode extends AbstractNode{
                             NetworkManager.sendPacket(response, port);
                         }
                     }
+
+                    if (updateCounter % 10 == 0) {
+                        updateBackups();
+                    }
                 }
 
             }
@@ -124,11 +129,12 @@ public class ANode extends AbstractNode{
     @Override
     void writeValue(int target, int value) {
         this.values[target] = value;
+        updateCounter++;
+        logVersion();
     }
 
     @Override
     int readValue(int target) {
         return this.values[target];
-
     }
 }

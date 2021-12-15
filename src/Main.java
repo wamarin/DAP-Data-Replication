@@ -10,17 +10,18 @@ public class Main {
             e.printStackTrace();
         }
 
-        DataManager dataManager = new DataManager(5);
+        DataManager dataManager = new DataManager(100);
         new Thread(dataManager).start();
-        dataManager.startCoreLayer();
-        dataManager.sendRead(2);
-        dataManager.sendWrite(2, 10);
-        dataManager.sendRead(2);
+        dataManager.startLayers();
+
+        for (int i = 0; i < 100; i++)
+            dataManager.sendWrite(i, i);
+
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        dataManager.shutdown();
+//        dataManager.shutdown();
     }
 }
