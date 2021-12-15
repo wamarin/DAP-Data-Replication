@@ -4,16 +4,32 @@ import java.util.UUID;
 
 public class PacketFactory {
 
-    public static Packet newWritePacket(String id, int target, int value) {
+    public static Packet newLayerWritePacket(String id, int target, int value) {
         Packet packet = new Packet(PacketType.WRITE, id);
         packet.setTarget(target);
         packet.setValue(value);
         return packet;
     }
 
-    public static Packet newReadPacket(String id, int target) {
+    public static Packet newWritePacket(String id, int target, int value, UUID requestId) {
+        Packet packet = new Packet(PacketType.WRITE, id);
+        packet.setTarget(target);
+        packet.setValue(value);
+        packet.setId(requestId);
+        return packet;
+    }
+
+    public static Packet newLayerReadPacket(String id, int target, int layer) {
         Packet packet = new Packet(PacketType.READ, id);
         packet.setTarget(target);
+        packet.setLayer(layer);
+        return packet;
+    }
+
+    public static Packet newReadPacket(String id, int target, UUID requestId) {
+        Packet packet = new Packet(PacketType.READ, id);
+        packet.setTarget(target);
+        packet.setId(requestId);
         return packet;
     }
 

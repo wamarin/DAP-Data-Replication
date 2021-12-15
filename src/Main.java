@@ -14,14 +14,21 @@ public class Main {
         new Thread(dataManager).start();
         dataManager.startLayers();
 
-        for (int i = 0; i < 100; i++)
+        for (int i = 0; i < 100; i++) {
             dataManager.sendWrite(i, i);
+            dataManager.sendRead(i, i % 3);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-//        dataManager.shutdown();
+        dataManager.shutdown();
     }
 }

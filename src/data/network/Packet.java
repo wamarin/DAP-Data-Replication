@@ -10,6 +10,7 @@ public class Packet implements Serializable {
     private final String clientId;
     private int value;
     private int[] values = null;
+    private int layer = 0;
 
     public Packet(PacketType type, String clientId) {
         this.id = UUID.randomUUID();
@@ -57,5 +58,11 @@ public class Packet implements Serializable {
         this.id = id;
     }
 
+    public int getLayer() {
+        return layer;
+    }
 
+    public void setLayer(int layer) {
+        this.layer = layer;
+    }
 }

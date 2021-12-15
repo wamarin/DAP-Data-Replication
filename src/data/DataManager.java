@@ -5,9 +5,9 @@ import data.network.Packet;
 import data.network.PacketFactory;
 import data.network.PacketType;
 import data.nodes.ANode;
-import data.nodes.AbstractNode;
 import data.nodes.BNode;
 import data.nodes.CNode;
+import data.nodes.TNode;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -18,7 +18,7 @@ public class DataManager implements Runnable{
     private final HashMap<String, Integer> nodes;
     private final List<Thread> threads;
     private final int n_values;
-    private final int port = 6979;
+    private final int port = 6978;
     private boolean running = true;
     private final HashSet<UUID> acknowledgements;
 
@@ -28,6 +28,7 @@ public class DataManager implements Runnable{
         this.acknowledgements = new HashSet<>();
         this.n_values = n_values;
 
+        nodes.put("DM", 6978);
         nodes.put("T1", 6979);
 
         nodes.put("A1", 6980);
@@ -52,9 +53,10 @@ public class DataManager implements Runnable{
 
                 packet = NetworkManager.readPacket(client);
 
-                System.out.println(packet.getType() + " : " + packet.getTarget() + " : " + packet.getValue());
                 if (packet.getType() == PacketType.ACKNOWLEDGE) {
                     acknowledgements.add(packet.getId());
+                } else {
+                    System.out.println(packet.getType() + " : " + packet.getTarget() + " : " + packet.getValue());
                 }
             }
         } catch (IOException e) {
@@ -66,6 +68,20 @@ public class DataManager implements Runnable{
         startLayer2();
         startLayer1();
         startLayer0();
+        startTransactionLayer();
+    }
+
+    private void startTransactionLayer() {
+        Thread thread;
+        List<List<String>> layers = new ArrayList<>();
+
+        layers.add(Arrays.asList("A1", "A2", "A3"));
+        layers.add(Arrays.asList("B1", "B2"));
+        layers.add(Arrays.asList("C1", "C2"));
+
+        thread = new Thread(new TNode(nodes.get("T1"), "T1", nodes, layers, 13));
+        threads.add(thread);
+        thread.start();
     }
 
     private void startLayer0() {
@@ -121,32 +137,24 @@ public class DataManager implements Runnable{
     }
 
     public void sendWrite(int target, int value) {
-        Packet packet = PacketFactory.newWritePacket("T1", target, value);
-        NetworkManager.sendPacket(packet, nodes.get("A1"));
-
-        while(!acknowledgements.contains(packet.getId())) {
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+        Packet packet = PacketFactory.newLayerWritePacket("DM", target, value);
+        int port = nodes.get("T1");
+        NetworkManager.sendPacket(packet, port);
     }
 
-    public void sendRead(int target) {
-        Packet packet = PacketFactory.newReadPacket("T1", target);
-        NetworkManager.sendPacket(packet, nodes.get("A1"));
+    public void sendRead(int target, int layer) {
+        Packet packet = PacketFactory.newLayerReadPacket("DM", target, layer);
+        int port = nodes.get("T1");
+        NetworkManager.sendPacket(packet, port);
     }
 
     public void shutdown() {
-        this.running = false;
-        Packet packet = PacketFactory.newShutdownPacket("T1");
+        Packet packet = PacketFactory.newShutdownPacket("DM");
+        running = false;
+        int port = nodes.get("T1");
+        NetworkManager.sendPacket(packet, port);
 
-        for (int port: nodes.values()) {
-            NetworkManager.sendPacket(packet, port);
-        }
-
-        for (Thread thread: threads) {
+        for (Thread thread: threads){
             try {
                 thread.join();
             } catch (InterruptedException e) {
