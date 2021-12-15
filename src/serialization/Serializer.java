@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import data.network.Packet;
 
 public class Serializer {
-    private static Gson gson = new Gson();
+    private static final Gson gson = new Gson();
 
     public static String serializePacket(Packet packet) {
         return gson.toJson(packet);

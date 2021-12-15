@@ -1,15 +1,12 @@
 package data;
 
-import com.google.gson.Gson;
 import data.network.Packet;
 import serialization.Serializer;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public abstract class AbstractNode implements Runnable{
@@ -27,13 +24,13 @@ public abstract class AbstractNode implements Runnable{
         this.running = true;
     }
 
-    @Override
-    public void run() {
+    private void startServer() {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
             Packet packet;
+            Socket client;
 
             while (running) {
-                Socket client = serverSocket.accept();
+                client = serverSocket.accept();
 
                 packet = readPacket(client);
 
@@ -86,7 +83,20 @@ public abstract class AbstractNode implements Runnable{
     abstract int readValue(int target);
 
     private void logVersion() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter("logs/" + id, true))) {
+            writer.println(Arrays.hashCode(values) + " : " + Arrays.toString(values));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
+    private void clearLog() {
+        try (PrintWriter writer = new PrintWriter(new FileWriter("logs/" + id))) {
+            writer.println(id);
+            writer.println();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public int getPort() {
