@@ -1,10 +1,10 @@
-import transactions.TransactionManager;
+import transactions.TransactionsParser;
 
 public class Main {
 
     public static void main(String[] args) {
         try {
-            TransactionManager.getTransactions("transactions.txt");
+            TransactionsParser.getTransactions("transactions.txt");
         } catch (Exception e) {
             e.printStackTrace();
         }

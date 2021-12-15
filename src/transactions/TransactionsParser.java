@@ -4,15 +4,13 @@ import operations.Operation;
 import operations.ReadOperation;
 import operations.WriteOperation;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TransactionManager {
+public class TransactionsParser {
     private static final Pattern readOperationMatchPattern = Pattern.compile("r\\(([0-9]+)\\)");
     private static final Pattern writeOperationMatchPattern = Pattern.compile("w\\(([0-9]+),([0-9]+)\\)");
     private static final Pattern numberMatchPattern = Pattern.compile("[0-9]+");
@@ -46,7 +44,17 @@ public class TransactionManager {
             e.printStackTrace();
         }
 
+        clearFile(transactionsFile);
+
         return transactions;
+    }
+
+    private static void clearFile(String transactionsFile) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(transactionsFile))) {
+            writer.print("");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static int getLayer(String transaction) {
