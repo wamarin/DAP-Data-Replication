@@ -4,18 +4,17 @@ import java.io.Serializable;
 
 public class Packet implements Serializable {
     private final PacketType type;
-    private final int timestamp;
-    private final int clientId;
-    private final int port;
+    private int target;
+    private final String clientId;
+    private int value;
+    private int[] values = null;
 
-    public Packet(PacketType type, int clientId, int timestamp, int port) {
+    public Packet(PacketType type, String clientId) {
         this.type = type;
         this.clientId = clientId;
-        this.timestamp = timestamp;
-        this.port = port;
     }
 
-    public int getClientId() {
+    public String getClientId() {
         return clientId;
     }
 
@@ -23,11 +22,27 @@ public class Packet implements Serializable {
         return type;
     }
 
-    public int getTimestamp() {
-        return timestamp;
+    public int getTarget() {
+        return target;
     }
 
-    public int getPort() {
-        return port;
+    public void setTarget(int target) {
+        this.target = target;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public void setValue(int value) {
+        this.value = value;
+    }
+
+    public int[] getValues() {
+        return values;
+    }
+
+    public void setValues(int[] values) {
+        this.values = values;
     }
 }

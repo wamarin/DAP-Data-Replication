@@ -5,5 +5,6 @@ public enum PacketType {
     READ,
     WRITE_REPLICATED,
     UPDATE,
-    ACKNOWLEDGE
+    ACKNOWLEDGE,
+    SHUTDOWN
 }

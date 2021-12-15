@@ -1,3 +1,4 @@
+import data.DataManager;
 import transactions.TransactionsParser;
 
 public class Main {
@@ -8,5 +9,10 @@ public class Main {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        DataManager dataManager = new DataManager(5);
+        dataManager.startCoreLayer();
+        dataManager.sendWrite(2, 10);
+        dataManager.shutdown();
     }
 }
