@@ -12,7 +12,7 @@ public class CNode extends AbstractNode {
     private final List<String> backups;
 
     public CNode(int port, String id, HashMap<String, Integer> nodes, int n_values, List<String> backups) {
-        super(port, id, nodes, n_values, backups);
+        super(port, id, nodes, n_values, backups, true);
         this.backups = backups;
     }
 

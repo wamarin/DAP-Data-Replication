@@ -1,9 +1,10 @@
 package data.nodes;
 
-import data.network.NetworkManager;
-import data.network.Packet;
-import data.network.PacketFactory;
+import data.network.*;
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.handshake.ServerHandshake;
 
+import java.net.URI;
 import java.util.*;
 
 public class TNode extends AbstractNode{
@@ -15,13 +16,49 @@ public class TNode extends AbstractNode{
     private final Random random;
 
     public TNode(int port, String id, HashMap<String, Integer> nodes, List<List<String>> layers, int seed) {
-        super(port, id, nodes, 0, null);
+        super(port, id, nodes, 0, null, false);
         this.processorThread = new Thread(new PacketProcessor());
         this.queue = new LinkedList<>();
         this.acknowledgements = new HashSet<>();
         this.responses = new HashMap<>();
         this.layers = layers;
         this.random = new Random(seed);
+
+        try {
+            webSocketClient = new WebSocketClient(new URI( "ws://localhost:8080/status/" + id )) {
+                @Override
+                public void onOpen(ServerHandshake serverHandshake) {
+
+                }
+
+                @Override
+                public void onMessage(String s) {
+                    System.out.println(s);
+                    try {
+                        Packet packet = new PacketDecoder().decode(s);
+                        queue.add(packet);
+                        notifyProcessor();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onClose(int i, String s, boolean b) {
+                    System.out.println("T1 closed!");
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    e.printStackTrace();
+                }
+            };
+
+            webSocketClient.connect();
+            System.out.println("Node " + id + " connected to WebSocket server!");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -59,13 +96,20 @@ public class TNode extends AbstractNode{
                     pauseProcessor();
                 } else {
                     Packet packet = queue.poll();
+
+                    if (Objects.equals(packet.getClientId(), "WebApp")) {
+                        if (packet.getType() == PacketType.WRITE)
+                            packet = PacketFactory.newWritePacket("T1", packet.getTarget(), packet.getValue(), UUID.randomUUID());
+                        if (packet.getType() == PacketType.SHUTDOWN)
+                            packet = PacketFactory.newShutdownPacket("T1");
+                    }
+
                     int port = nodes.get(packet.getClientId());
                     int target = packet.getTarget();
                     int layer = packet.getLayer();
                     int value = packet.getValue();
                     UUID requestId = packet.getId();
                     Packet response;
-
 
                     switch (packet.getType()) {
                         case WRITE -> {
@@ -81,6 +125,8 @@ public class TNode extends AbstractNode{
                             response = PacketFactory.newResponsePacket(id, target, responses.get(requestId), requestId);
                             NetworkManager.sendPacket(response, port);
                         }
+
+                        case SHUTDOWN -> shutdown();
                     }
                 }
 
@@ -158,8 +204,10 @@ public class TNode extends AbstractNode{
 
     private void shutdown() {
         this.running = false;
-        Packet packet = PacketFactory.newShutdownPacket("T1");
+        Packet packet = PacketFactory.newShutdownPacket(id);
 
         broadcast(packet);
+        packet = PacketFactory.newAcknowledgePacket(id, null);
+        NetworkManager.sendPacket(packet, nodes.get(id));
     }
 }

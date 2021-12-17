@@ -1,16 +1,22 @@
 package data.nodes;
 
-import data.network.NetworkManager;
-import data.network.Packet;
-import data.network.PacketFactory;
+import data.network.*;
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.handshake.ServerHandshake;
 import serialization.Serializer;
 
+import javax.websocket.EncodeException;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractNode implements Runnable{
     protected int[] values;
@@ -19,8 +25,9 @@ public abstract class AbstractNode implements Runnable{
     protected final HashMap<String, Integer> nodes;
     protected volatile boolean running;
     private final List<String> backups;
+    protected WebSocketClient webSocketClient = null;
 
-    public AbstractNode(int port, String id, HashMap<String, Integer> nodes, int n_values, List<String> backups) {
+    public AbstractNode(int port, String id, HashMap<String, Integer> nodes, int n_values, List<String> backups, boolean withWebSocket) {
         this.port = port;
         this.id = id;
         this.nodes = nodes;
@@ -28,6 +35,16 @@ public abstract class AbstractNode implements Runnable{
         this.running = true;
         this.backups = backups;
         this.clearLog();
+
+        if (withWebSocket) {
+            try {
+                webSocketClient = new WebSocketClientEndpoint( new URI( "ws://localhost:8080/status/" + id ));
+                webSocketClient.connect();
+                System.out.println("Node " + id + " connected to WebSocket server!");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     protected void startServer() {
@@ -42,6 +59,8 @@ public abstract class AbstractNode implements Runnable{
 
                 dispatchPacket(packet);
             }
+
+            webSocketClient.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -66,6 +85,8 @@ public abstract class AbstractNode implements Runnable{
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        pushVersionToWebApp();
     }
 
     protected void clearLog() {
@@ -89,5 +110,15 @@ public abstract class AbstractNode implements Runnable{
 
     public void setRunning(boolean running) {
         this.running = running;
+    }
+
+    protected void pushVersionToWebApp() {
+        Packet packet = PacketFactory.newUpdatePacket(id, values);
+
+        try {
+            webSocketClient.send(new PacketEncoder().encode(packet));
+        } catch (EncodeException e) {
+            e.printStackTrace();
+        }
     }
 }

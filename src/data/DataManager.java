@@ -152,7 +152,7 @@ public class DataManager implements Runnable{
         Packet packet = PacketFactory.newShutdownPacket("DM");
         running = false;
         int port = nodes.get("T1");
-        NetworkManager.sendPacket(packet, port);
+//        NetworkManager.sendPacket(packet, port);
 
         for (Thread thread: threads){
             try {

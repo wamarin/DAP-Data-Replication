@@ -14,7 +14,7 @@ public class ANode extends AbstractNode{
     private int updateCounter = 0;
 
     public ANode(int port, String id, HashMap<String, Integer> nodes, int n_values, HashSet<String> peers, List<String> backups) {
-        super(port, id, nodes, n_values, backups);
+        super(port, id, nodes, n_values, backups, true);
         this.peers = peers;
         this.processorThread = new Thread(new PacketProcessor());
         this.queue = new LinkedList<>();

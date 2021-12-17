@@ -22,6 +22,8 @@ public class Packet implements Serializable {
         return clientId;
     }
 
+
+
     public PacketType getType() {
         return type;
     }
